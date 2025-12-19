@@ -54,3 +54,43 @@ export const getMovies = (req, res) => {
       res.status(500).json({ message: "Search failed", error: error.message });
     }
   };
+
+  export const getShowSeats = async (req, res) => {
+    const seats = await Seat.find({ show: req.params.showId });
+    res.json(seats);
+  };
+  export const lockSeats = async (req, res) => {
+    const { showId, seats } = req.body;
+  
+    await Seat.updateMany(
+      { show: showId, seatNumber: { $in: seats }, status: "available" },
+      { status: "locked" }
+    );
+  
+    res.json({ message: "Seats locked" });
+  };
+  export const createBooking = async (req, res) => {
+    const { showId, seats, totalAmount } = req.body;
+  
+    await Seat.updateMany(
+      { show: showId, seatNumber: { $in: seats } },
+      { status: "booked" }
+    );
+  
+    const booking = await Booking.create({
+      user: req.user.id,
+      show: showId,
+      seats,
+      totalAmount,
+      paymentStatus: "paid",
+    });
+  
+    res.status(201).json(booking);
+  };
+  export const getMyBookings = async (req, res) => {
+    const bookings = await Booking.find({ user: req.user.id })
+      .populate("show");
+  
+    res.json(bookings);
+  };
+        

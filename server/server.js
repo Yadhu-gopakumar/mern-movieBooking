@@ -19,9 +19,8 @@ app.use("/api/seller", ownerRouter);
 app.use("/api", userRouter);
 
 /* ===== DATABASE ===== */
-console.log(process.env.MONGO_URL)
 mongoose
-  .connect(process.env.mongo_conn_url)
+  .connect(process.env.MONGO_URL)
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("DB connection failed", err));
 
