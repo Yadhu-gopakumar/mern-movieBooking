@@ -1,6 +1,7 @@
 import express from "express";
 import {
   getMovies,
+getMovieById,
   getShowsByMovie,
   searchTheaters,
   getShowSeats,
@@ -15,6 +16,7 @@ const userRouter = express.Router();
 
 /* ===== BROWSING ===== */
 userRouter.get("/movies", getMovies);
+userRouter.get("/movies/:movieId", getMovieById);
 userRouter.get("/shows/:movieId", getShowsByMovie);
 userRouter.get("/search-theaters", searchTheaters);
 

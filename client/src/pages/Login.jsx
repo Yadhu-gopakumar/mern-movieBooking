@@ -1,57 +1,82 @@
 import React, { useState } from "react";
 import AuthLayout from "../../components/AuthLayout";
-import { useLocation, useNavigate,Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
   const [role, setRole] = useState("user");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   const navigate = useNavigate();
   const location = useLocation();
-
   const from = location.state?.from?.pathname || "/";
 
-  const handleLogin = () => {
-    localStorage.setItem("token", "dummy-token");
-    window.dispatchEvent(new Event("storage")); // 🔥 important
-    navigate(from, { replace: true });
+  const handleLogin = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await axios.post("http://localhost:3000/api/auth/login", {
+        email,
+        password,
+      });
+
+      localStorage.setItem("token", res.data.token);
+      window.dispatchEvent(new Event("storage"));
+
+      navigate(from, { replace: true });
+    } catch (err) {
+      alert(err.response?.data?.message || "Login failed");
+    }
   };
-  
 
   return (
     <AuthLayout title="Welcome Back">
-      <form className="space-y-5">
+      <form className="space-y-5" onSubmit={handleLogin}>
         <div>
-          <label className="text-gray-300 text-sm mb-1 block">Email Address</label>
-          <input type="email" className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="name@example.com" />
+          <label className="text-gray-300 text-sm mb-1 block">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white"
+          />
         </div>
 
         <div>
           <label className="text-gray-300 text-sm mb-1 block">Password</label>
-          <input type="password" className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-yellow-400" placeholder="••••••••" />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full bg-white/5 border border-white/20 rounded-lg px-4 py-2 text-white"
+          />
         </div>
 
-        {/* Role Selection */}
-        <div className="flex justify-between gap-2 py-2">
+        {/* Role UI (optional – backend decides role) */}
+        <div className="flex gap-2 py-2">
           {["user", "admin", "owner"].map((r) => (
             <label key={r} className="flex-1 cursor-pointer">
-              <input 
-                type="radio" name="role" value={r} 
-                checked={role === r} 
-                onChange={(e) => setRole(e.target.value)}
-                className="hidden peer" 
+              <input
+                type="radio"
+                checked={role === r}
+                onChange={() => setRole(r)}
+                className="hidden peer"
               />
-              <div className="text-center py-2 rounded-lg border border-white/20 text-xs uppercase font-bold text-gray-400 peer-checked:bg-yellow-400 peer-checked:text-black peer-checked:border-yellow-400 transition-all">
+              <div className="text-center py-2 rounded-lg border text-xs uppercase font-bold peer-checked:bg-yellow-400">
                 {r}
               </div>
             </label>
           ))}
         </div>
 
-        <button className="w-full bg-yellow-400 text-black font-bold py-3 rounded-lg hover:bg-yellow-300 transition-colors mt-4" onClick={handleLogin}>
+        <button className="w-full bg-yellow-400 py-3 rounded-lg font-bold">
           Sign In
         </button>
-        
-        <p className="text-center text-gray-400 text-sm mt-4" style={{"color":"white"}}>
-          Don't have an account? <span className="text-yellow-400 cursor-pointer hover:underline"><Link to='/register'>Register</Link></span>
+
+        <p className="text-center text-sm text-white">
+          Don’t have an account?{" "}
+          <Link to="/register" className="text-yellow-400">Register</Link>
         </p>
       </form>
     </AuthLayout>

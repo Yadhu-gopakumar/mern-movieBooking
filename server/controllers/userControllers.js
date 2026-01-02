@@ -27,7 +27,7 @@ export const getMovies = async (req, res) => {
 };
 
 // View single movie details
-export const viewMovie = async (req, res) => {
+export const getMovieById = async (req, res) => {
   try {
     const { movieId } = req.params;
 
@@ -133,63 +133,88 @@ export const searchTheaters = async (req, res) => {
     const seats = await Seat.find({ show: req.params.showId });
     res.json(seats);
   };
+ 
   export const lockSeats = async (req, res) => {
     const { showId, seats } = req.body;
   
-    await Seat.updateMany(
-      { show: showId, seatNumber: { $in: seats }, status: "available" },
-      { status: "locked" }
-    );
-  
-    res.json({ message: "Seats locked" });
-  };
-
-
-
-export const createBooking = async (req, res) => {
-  try {
-    const { showId, seats, totalAmount } = req.body;
-
-    // 1️⃣ Get show to fetch theater
-    const show = await Show.findById(showId);
-    if (!show) {
-      return res.status(404).json({ message: "Show not found" });
-    }
-
-    // 2️⃣ Mark seats as booked
     await Seat.updateMany(
       {
         show: showId,
         seatNumber: { $in: seats },
         isBooked: false,
+        isLocked: false,
       },
-      { isBooked: true }
+      { isLocked: true }
     );
+  
+    res.json({ message: "Seats locked" });
+  };
+  
 
-    // 3️⃣ Create booking
-    const booking = await Bookings.create({
-      user: req.user.id,
-      theater: show.theaterId,
-      show: showId,
-      seats,
-      totalAmount,
-      paymentStatus: "paid",
-    });
-
-    res.status(201).json({
-      message: "Booking successful",
-      data: booking,
-    });
-  } catch (error) {
-    res.status(500).json({
-      message: "Booking failed",
-      error: error.message,
-    });
-  }
-};
+  export const createBooking = async (req, res) => {
+    try {
+      const { showId, seats, totalAmount } = req.body;
+  
+      // 1️⃣ Validate show
+      const show = await Show.findById(showId);
+      if (!show) {
+        return res.status(404).json({ message: "Show not found" });
+      }
+  
+      // 2️⃣ Ensure seats are LOCKED and NOT booked
+      const lockedSeats = await Seat.find({
+        show: showId,
+        seatNumber: { $in: seats },
+        isBooked: false,
+        isLocked: true,
+      });
+  
+      if (lockedSeats.length !== seats.length) {
+        return res.status(409).json({
+          message: "Some seats are no longer available",
+        });
+      }
+  
+      // 3️⃣ Book seats & unlock them
+      await Seat.updateMany(
+        {
+          show: showId,
+          seatNumber: { $in: seats },
+        },
+        {
+          isBooked: true,
+          isLocked: false,
+        }
+      );
+  
+      // 4️⃣ Create booking
+      const booking = await Bookings.create({
+        user: req.user.id,
+        theater: show.theaterId,
+        show: showId,
+        seats,
+        totalAmount,
+        paymentStatus: "paid",
+      });
+  
+      res.status(201).json({
+        message: "Booking successful",
+        data: booking,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Booking failed",
+        error: error.message,
+      });
+    }
+  };
+  
 
 
 export const getMyBookings = async (req, res) => {
+  console.log("REQ.USER:", req.user);
+  console.log("REQ.USER.ID:", req.user?.id);
+
   const bookings = await Bookings.find({ user: req.user.id })
     .populate("show", "date time price")
     .populate("theater", "name location");

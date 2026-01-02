@@ -1,48 +1,29 @@
-import { useParams } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const MovieDetails = () => {
-  const { id } = useParams();
-    const navigate = useNavigate();
-  
+  const { id } = useParams(); // movieId
+  const navigate = useNavigate();
 
-  // TEMP MOCK DATA (matches your Mongo schema)
-  const movie = {
-    _id: id,
-    title: "Inception",
-    language: "English",
-    genre: "Sci-Fi • Thriller",
-    duration: 148,
-    description:
-      "A skilled thief is given a chance at redemption if he can successfully perform inception.",
-  };
+  const [movie, setMovie] = useState(null);
+  const [shows, setShows] = useState([]);
 
-  const shows = [
-    {
-      _id: "1",
-      theater: "PVR Lulu Mall",
-      date: "2025-01-20",
-      time: "10:30",
-      price: 180,
-      seats: 120,
-    },
-    {
-      _id: "2",
-      theater: "Cinepolis Centre Square",
-      date: "2025-01-20",
-      time: "14:00",
-      price: 200,
-      seats: 95,
-    },
-    {
-      _id: "3",
-      theater: "INOX Oberon Mall",
-      date: "2025-01-20",
-      time: "19:30",
-      price: 220,
-      seats: 60,
-    },
-  ];
+  useEffect(() => {
+    // 1️⃣ Fetch movie details
+    axios
+      .get(`http://localhost:3000/api/movies/${id}`)
+      .then(res => setMovie(res.data.data))
+      .catch(err => console.error(err));
+
+    // 2️⃣ Fetch shows for this movie
+    axios
+      .get(`http://localhost:3000/api/shows/${id}`)
+      .then(res => setShows(res.data.data))
+      .catch(err => console.error(err));
+  }, [id]);
+
+  if (!movie) return <p className="text-black">Loading movie…</p>;
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 p-6">
@@ -60,24 +41,37 @@ const MovieDetails = () => {
 
       {/* Shows Section */}
       <div className="space-y-4">
-        <h2 className="text-2xl font-semibold text-black">Available Shows</h2>
+        <h2 className="text-2xl font-semibold text-black">
+          Available Shows
+        </h2>
 
-        {shows.map((show) => (
+        {shows.length === 0 && (
+          <p className="text-gray-500">No shows available</p>
+        )}
+
+        {shows.map(show => (
           <div
             key={show._id}
             className="flex flex-col md:flex-row md:items-center justify-between bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
           >
             <div className="space-y-1">
-              <p className="text-lg font-semibold">{show.theater}</p>
+              <p className="text-lg font-semibold">
+                {show.theaterId.name}
+              </p>
+
               <p className="text-gray-500">
                 {show.date} • {show.time}
               </p>
+
               <p className="text-sm text-gray-500">
-                ₹{show.price} • {show.seats} seats available
+                From ₹{show.basePrice}
               </p>
             </div>
 
-            <button className="mt-4 md:mt-0 bg-yellow-400 px-6 py-2 rounded-lg font-bold hover:bg-yellow-500" onClick={()=>navigate(`/show/${show._id}/seats`)}>
+            <button
+              className="mt-4 md:mt-0 bg-yellow-400 px-6 py-2 rounded-lg font-bold hover:bg-yellow-500"
+              onClick={() => navigate(`/show/${show._id}/seats`)}
+            >
               Select Seats
             </button>
           </div>

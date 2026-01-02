@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-
+import cors from "cors";
 import authRouter from "./routes/authRoutes.js";
 import adminRouter from "./routes/adminRoutes.js";
 import ownerRouter from "./routes/ownerRoutes.js";
@@ -11,7 +11,7 @@ dotenv.config();
 
 const app = express();
 app.use(express.json());
-
+app.use(cors({ origin: "http://localhost:5173" })); // React/Vite URL
 /* ===== ROUTES ===== */
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);

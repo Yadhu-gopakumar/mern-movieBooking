@@ -3,26 +3,27 @@ import MyBookings from "./pages/MyBookings";
 import Login from "./pages/Login";
 import HomePage from "./pages/HomePage";
 import { isLoggedIn } from "../utlis/auth.js";
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import Search from "./pages/Search";
 import Register from "./pages/Register";
 import MovieDetails from "./pages/MovieDetails";
 import SeatSelection from "./pages/SeatSelection";
 import ProtectedRoutes from "../components/ProtectedRoutes";
+import BookingSuccess from "./pages/BookingSuccessPage.jsx";
 
 
 function App() {
   const [query, setQuery] = useState("");
   const [isAuth, setIsAuth] = useState(isLoggedIn());
-  
+
   useEffect(() => {
     const syncAuth = () => setIsAuth(isLoggedIn());
     window.addEventListener("storage", syncAuth);
     syncAuth();
-  
+
     return () => window.removeEventListener("storage", syncAuth);
   }, []);
-  
+
 
 
   const navigate = useNavigate();
@@ -61,42 +62,42 @@ function App() {
           </div>
 
           {!isAuth ? (
-  <>
-    <Link
-      to="/login"
-      className="bg-yellow-400 text-black px-4 py-1 rounded hover:bg-yellow-500"
-    >
-      Login
-    </Link>
+            <>
+              <Link
+                to="/login"
+                className="bg-yellow-400 text-black px-4 py-1 rounded hover:bg-yellow-500"
+              >
+                Login
+              </Link>
 
-    <Link
-      to="/register"
-      className="bg-yellow-400 text-black px-4 py-1 rounded hover:bg-yellow-500"
-    >
-      Register
-    </Link>
-  </>
-) : (
-  <div className="flex items-center gap-4">
-    <Link
-      to="/profile"
-      className="hover:text-yellow-400"
-    >
-      Profile
-    </Link>
+              <Link
+                to="/register"
+                className="bg-yellow-400 text-black px-4 py-1 rounded hover:bg-yellow-500"
+              >
+                Register
+              </Link>
+            </>
+          ) : (
+            <div className="flex items-center gap-4">
+              <Link
+                to="/profile"
+                className="hover:text-yellow-400"
+              >
+                Profile
+              </Link>
 
-    <button
-      onClick={() => {
-        localStorage.removeItem("token");
-        setIsAuth(false);
-        navigate("/");
-      }}
-      className="bg-gray-700 px-3 py-1 rounded hover:bg-gray-600"
-    >
-      Logout
-    </button>
-  </div>
-)}
+              <button
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  setIsAuth(false);
+                  navigate("/");
+                }}
+                className="bg-gray-700 px-3 py-1 rounded hover:bg-gray-600"
+              >
+                Logout
+              </button>
+            </div>
+          )}
 
         </div>
       </nav>
@@ -104,7 +105,7 @@ function App() {
       <main className="min-h-screen bg-gray-100 ">
         <Routes>
           <Route path="/" element={<HomePage />} />
-        
+
           <Route path="/bookings" element={
             <ProtectedRoutes>
               <MyBookings />
@@ -114,11 +115,12 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/search" element={<Search />} />
           <Route path="/movie/:id" element={<MovieDetails />} />
-          <Route path="/show/:id/seats" element={
+          <Route path="/show/:showId/seats" element={
             <ProtectedRoutes>
               <SeatSelection />
             </ProtectedRoutes>
           } />
+          <Route path="/booking-success" element={<BookingSuccess />} />
 
         </Routes>
       </main>

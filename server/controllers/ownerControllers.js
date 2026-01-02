@@ -77,10 +77,9 @@ export const getTheaterById = async (req, res) => {
   res.json(theater);
 };
 
-
 export const addShow = async (req, res) => {
   try {
-    const { movieId, theaterId, date, time, price } = req.body;
+    const { movieId, theaterId, date, time, basePrice } = req.body;
 
     // 1️⃣ Verify theater belongs to owner
     const theater = await Theater.findOne({
@@ -94,17 +93,13 @@ export const addShow = async (req, res) => {
       });
     }
 
-    // 2️⃣ Create show
+    // 2️⃣ Create show (NO seats field)
     const show = await Show.create({
       movieId,
       theaterId,
       date,
       time,
-      price,
-      seats: theater.seatLayout.reduce(
-        (sum, row) => sum + row.seatCount,
-        0
-      ),
+      basePrice,
     });
 
     // 3️⃣ Create seats for this show
@@ -115,9 +110,10 @@ export const addShow = async (req, res) => {
         seatDocs.push({
           theater: theater._id,
           show: show._id,
-          seatNumber: `${row.row}${i}`, // A1, A2, B1...
-          price: row.price,
+          seatNumber: `${row.row}${i}`,
+          price: row.price ?? basePrice, // 👈 fallback
           isBooked: false,
+          isLocked: false,
         });
       }
     });
@@ -126,7 +122,7 @@ export const addShow = async (req, res) => {
 
     res.status(201).json({
       message: "Show created and seats generated successfully",
-      show,
+      data: show,
     });
   } catch (error) {
     res.status(500).json({
@@ -136,12 +132,13 @@ export const addShow = async (req, res) => {
   }
 };
 
-
 export const updateShow = async (req, res) => {
   try {
+    const { basePrice, date, time } = req.body;
+
     const show = await Show.findOneAndUpdate(
       { _id: req.params.id },
-      req.body,
+      { basePrice, date, time },
       { new: true }
     );
 
@@ -154,6 +151,7 @@ export const updateShow = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
 
 export const deleteShow = async (req, res) => {
   try {
@@ -171,10 +169,12 @@ export const deleteShow = async (req, res) => {
   }
 };
 
+
 export const getShows = async (req, res) => {
   const shows = await Show.find()
     .populate("theaterId", "name location")
-    .populate("movieId", "title");
+    .populate("movieId", "title")
+    .select("movieId theaterId date time basePrice");
 
   res.json(shows);
 };

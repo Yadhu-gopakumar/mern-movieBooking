@@ -32,7 +32,7 @@ const Register = () => {
 
         <label className="text-gray-300 text-sm block mb-1">Select Your Role</label>
         <div className="flex justify-between gap-2">
-          {["user", "admin", "owner"].map((r) => (
+          {["user", "owner"].map((r) => (
             <label key={r} className="flex-1 cursor-pointer">
               <input 
                 type="radio" name="role" value={r} 
